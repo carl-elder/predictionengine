@@ -9,6 +9,24 @@ from mysql.connector import connect
 from dotenv import load_dotenv
 import os
 
+LOG_FILE = '/var/log/app.log'
+
+if not os.path.exists('/var/log'):
+    os.makedirs('/var/log')
+
+file_handler = logging.FileHandler(LOG_FILE)
+file_handler.setLevel(logging.INFO)
+
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+file_handler.setFormatter(formatter)
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
+logging.getLogger('').addHandler(file_handler)
+logger = logging.getLogger(__name__)
+
 # Main Function
 if __name__ == "__main__":
     symbols = [
