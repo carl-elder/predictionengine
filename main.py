@@ -28,7 +28,8 @@ logging.getLogger('').addHandler(file_handler)
 logger = logging.getLogger(__name__)
 
 # Main Function
-if __name__ == "__main__":
+def main():
+    # Coins we track and trade
     symbols = [
         "XRP-USD",
         "ADA-USD",
@@ -63,3 +64,5 @@ if __name__ == "__main__":
     # Close the database connection after execution
     connection.close()
 
+if __name__ == "__main__":
+    main()
