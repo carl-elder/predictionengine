@@ -5,6 +5,7 @@ from typing import Any, Dict, Optional
 import uuid
 import requests
 from nacl.signing import SigningKey
+import os
 
 class CryptoAPITrading:
     def __init__(self):
