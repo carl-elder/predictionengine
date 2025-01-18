@@ -8,7 +8,7 @@ from nacl.signing import SigningKey
 
 class CryptoAPITrading:
     def __init__(self):
-        self.api_key = API_KEY
+        self.api_key = os.getenv("API_KEY")
         private_key_seed = base64.b64decode(BASE64_PRIVATE_KEY)
         self.private_key = SigningKey(private_key_seed)
         self.base_url = "https://trading.robinhood.com"
