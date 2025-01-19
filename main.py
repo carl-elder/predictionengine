@@ -12,7 +12,7 @@ import os
 LOG_FILE = 'var/log/app.log'
 
 if not os.path.exists('var/log'):
-    os.makedirs('var/log')
+    os.makedirs('dvar/log')
 
 file_handler = logging.FileHandler(LOG_FILE)
 file_handler.setLevel(logging.INFO)
