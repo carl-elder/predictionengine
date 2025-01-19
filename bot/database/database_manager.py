@@ -43,7 +43,7 @@ class DatabaseManager:
     def fetch_data(self, coin):
         cursor = self.connection.cursor()
         table_name = f"{coin.replace('-USD', '').lower()}_value_history"
-        sql = f"SELECT timestamp, value FROM {table_name} ORDER BY timestamp DESC LIMIT 48"
+        sql = f"SELECT timestamp, price FROM {table_name} ORDER BY timestamp DESC LIMIT 48"
         cursor.execute(sql)
         data = cursor.fetchall()
         cursor.close()

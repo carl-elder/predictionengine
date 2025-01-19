@@ -40,16 +40,27 @@ class ExchangeAPI:
             logging.error(f"Error fetching best price for {coin}: {e}", exc_info=True)
             return None
 
-    def get_holdings(self, coin):
+    def get_holdings(self):
         """
-        Fetch the holdings for a given coin.
+        Fetch the holdings for aall coin.
         """
         try:
-            response = self.client.get_holdings(coin)
+            response = self.client.get_holdings()
             if not response or "results" not in response:
-                logging.warning(f"No holdings data for {coin}.")
+                logging.warning(f"No holdings data.")
                 return None
             return response
         except Exception as e:
-            logging.error(f"Error fetching holdings for {coin}: {e}", exc_info=True)
+            logging.error(f"Error fetching holdings: {e}", exc_info=True)
+            return None
+    
+    def get_account(self):
+        try:
+            response = self.client.get_account()
+            if not response or "buying_power" not in response:
+                logging.warning(f"Account unavailable.")
+                return None
+            return response
+        except Exception as e:
+            logging.error(f"Error fetching account: {e}", exc_info=True)
             return None

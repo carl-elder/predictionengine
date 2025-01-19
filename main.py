@@ -12,7 +12,7 @@ import os
 LOG_FILE = 'var/log/app.log'
 
 if not os.path.exists('var/log'):
-    os.makedirs('dvar/log')
+    os.makedirs('var/log')
 
 file_handler = logging.FileHandler(LOG_FILE)
 file_handler.setLevel(logging.INFO)
@@ -59,7 +59,7 @@ def main():
     bot = Bot(symbols, strategy, api, db_manager)
 
     # Execute the bot
-    bot.execute()
+    bot.run()
 
     # Close the database connection after execution
     connection.close()
