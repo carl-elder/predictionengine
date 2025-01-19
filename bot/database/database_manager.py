@@ -95,3 +95,23 @@ class DatabaseManager:
         row = cursor.fetchone()
         cursor.close()
         return row[0] if row else None
+        
+    def get_last_timestamp(self, coin):
+        """
+        Fetch the last timestamp for a given coin.
+        """
+        query = "SELECT last_timestamp FROM last_checked WHERE coin = %s"
+        result = self.execute_query(query, (coin,))
+        return result[0][0] if result else None
+
+    def update_last_timestamp(self, coin, timestamp):
+        """
+        Update the last timestamp for a given coin.
+        If the coin does not exist, insert it.
+        """
+        query = """
+            INSERT INTO last_checked (coin, last_timestamp)
+            VALUES (%s, %s)
+            ON DUPLICATE KEY UPDATE last_timestamp = %s
+        """
+        self.execute_query(query, (coin, timestamp, timestamp))

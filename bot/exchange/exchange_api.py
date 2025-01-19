@@ -9,6 +9,7 @@ class ExchangeAPI:
         try:
             client_order_id = str(uuid.uuid4())  # Generate a unique client order ID
             side = "buy" if order_type == "buy" else "sell"  # Determine the side of the order
+            # Determine the type of order
 
             order_config = {
                 "asset_quantity": quantity,
@@ -26,7 +27,37 @@ class ExchangeAPI:
             logging.error(f"Error placing {order_type} order for {coin}: {e}", exc_info=True)
             return None
 
-    def get_best_price(self, coin):
+    def get_executed_orders(self, symbol: str, last_timestamp: str = None) -> list:
+        """
+        Fetch executed orders for a specific symbol after a given timestamp.
+        :param symbol: Coin symbol (e.g., "BTC-USD").
+        :param last_timestamp: ISO8601 timestamp for filtering newer orders.
+        :return: List of executed orders.
+        """
+        try:
+            # Build the request path
+            params = f"?symbol={symbol}"
+            if last_timestamp:
+                params += f"&created_at_start={last_timestamp}"
+            path = f"/api/v1/crypto/trading/orders/{params}"
+
+            # Fetch orders from API
+            response = self.client.make_api_request("GET", path)
+            if not response or "results" not in response:
+                logging.warning(f"No order data found for {symbol}.")
+                return []
+
+            # Filter executed orders
+            executed_orders = [
+                order for order in response["results"] if order["state"] == "filled"
+            ]
+            return executed_orders
+
+        except Exception as e:
+            logging.error(f"Error fetching executed orders: {e}", exc_info=True)
+            return []
+            
+    def get_best_price(self, coin = ''):
         """
         Fetch the best bid and ask prices for the given coin.
         """

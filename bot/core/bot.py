@@ -15,44 +15,49 @@ class Bot:
         self.strategy = strategy
 
     def run(self):
-        # 1) Build a dictionary to hold best_price data for *each* coin (once per run)
+        # Build a dictionary to hold best_price data for *each* coin (once per run)
         best_price_dict = {}
 
         for coin in self.symbols:
             logging.info(f"Processing {coin}...")
-
             try:
-                # 2) Fetch best price data once
+                # Fetch best price data once
                 coin_data = self.api.get_best_price(coin)
                 if not coin_data or "results" not in coin_data:
                     logging.warning(f"No data for {coin}. Skipping...")
                     continue
 
-                # 3) Insert into DB so we have the record
+                # Insert into DB and store in dictionary
                 self.db_manager.insert_data(coin, coin_data)
-
-                # 4) Store in a dictionary so strategy can use it (and we avoid re-calling the API)
                 best_price_dict[coin] = coin_data
-
             except Exception as e:
-                logging.error(f"Error fetching data for {coin}: {e}", exc_info=True)
+                logging.error(f"Error fetching or storing data for {coin}: {e}", exc_info=True)
+                continue
 
-        # 5) For each coin, fetch historical data and run the strategy
-        for coin in self.symbols:
             try:
-                # If we didn't get coin_data, skip
-                if coin not in best_price_dict:
-                    continue
-
-                coin_data = best_price_dict[coin]
+                # Fetch historical data
                 historical_data = self.db_manager.fetch_data(coin)
+
+                # Execute strategy with pre-fetched best_price data
                 self.strategy.execute_strategy(
                     coin,
                     coin_data,
                     historical_data,
                     self.api,
                     self.db_manager,
-                    best_price_dict  # pass all price data for synergy
+                    best_price_dict
                 )
             except Exception as e:
-                logging.error(f"Error processing strategy for {coin}: {e}", exc_info=True)
+                logging.error(f"Error executing strategy for {coin}: {e}", exc_info=True)
+                continue
+
+            try:
+                # Handle executed orders for this coin
+                last_timestamp = self.db_manager.get_last_timestamp(coin)
+                executed_orders = self.api.get_executed_orders(coin, last_timestamp)
+
+                for order in executed_orders:
+                    self.strategy.handle_post_buy_actions(order, self.api)
+                    self.db_manager.update_last_timestamp(coin, order["updated_at"])
+            except Exception as e:
+                logging.error(f"Error processing executed orders for {coin}: {e}", exc_info=True)

@@ -9,10 +9,11 @@ from mysql.connector import connect
 from dotenv import load_dotenv
 import os
 
-LOG_FILE = 'var/log/app.log'
+# Load environment variables
+load_dotenv('/Users/carlelder/Documents/predictionengine/.env')
 
-if not os.path.exists('var/log'):
-    os.makedirs('var/log')
+LOG_FILE = 'var/log/app.log'
+os.makedirs('var/log', exist_ok=True)
 
 file_handler = logging.FileHandler(LOG_FILE)
 file_handler.setLevel(logging.INFO)
@@ -20,11 +21,9 @@ file_handler.setLevel(logging.INFO)
 formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 file_handler.setFormatter(formatter)
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
-logging.getLogger('').addHandler(file_handler)
+logging.basicConfig(level=logging.INFO)  # Basic console config
+logging.getLogger('').addHandler(file_handler)  # Add file handler to root logger
+
 logger = logging.getLogger(__name__)
 
 # Main Function
@@ -40,8 +39,6 @@ def main():
         "UNI-USD",
     ]
 
-    # Load environment variables
-    load_dotenv()
 
     # Initialize database connection
     connection = connect(
@@ -56,7 +53,7 @@ def main():
     db_manager = DatabaseManager(connection)
     api = ExchangeAPI(api_client)
     strategy = ScalpingStrategy()
-    bot = Bot(symbols, strategy, api, db_manager)
+    bot = Bot(symbols, api, db_manager, strategy)
 
     # Execute the bot
     bot.run()
