@@ -1,12 +1,13 @@
 import logging
 from datetime import datetime
 
+
 class Bot:
     def __init__(self, symbols, api, db_manager, strategy):
         """
         :param symbols: list of coins, e.g. ["BTC-USD", "ETH-USD", ...]
         :param api: an object with methods like get_best_price(...)
-        :param db_manager: your DatabaseManager object with insert_data, fetch_data, etc.
+        :param db_manager: your DatabaseManager object managing specialized managers.
         :param strategy: instance of ScalpingStrategy
         """
         self.symbols = symbols
@@ -27,16 +28,16 @@ class Bot:
                     logging.warning(f"No data for {coin}. Skipping...")
                     continue
 
-                # Insert into DB and store in dictionary
-                self.db_manager.insert_data(coin, coin_data)
+                # Insert into the value history table and store in the dictionary
+                self.db_manager.value_history.insert_data(coin, coin_data)
                 best_price_dict[coin] = coin_data
             except Exception as e:
                 logging.error(f"Error fetching or storing data for {coin}: {e}", exc_info=True)
                 continue
 
             try:
-                # Fetch historical data
-                historical_data = self.db_manager.fetch_data(coin)
+                # Fetch historical data from value history
+                historical_data = self.db_manager.value_history.fetch_data(coin)
 
                 # Execute strategy with pre-fetched best_price data
                 self.strategy.execute_strategy(
@@ -53,11 +54,17 @@ class Bot:
 
             try:
                 # Handle executed orders for this coin
-                last_timestamp = self.db_manager.get_last_timestamp(coin)
+                last_timestamp = self.db_manager.timestamps.get_last_timestamp(coin)
                 executed_orders = self.api.get_executed_orders(coin, last_timestamp)
 
                 for order in executed_orders:
                     self.strategy.handle_post_buy_actions(order, self.api)
-                    self.db_manager.update_last_timestamp(coin, order["updated_at"])
+
+                    # Insert or update the order in the order history table
+                    table_name = f"{coin.replace('-USD', '').lower()}_order_history"
+                    self.db_manager.order_history.insert_or_update_order(table_name, order)
+
+                    # Update the last timestamp for the coin
+                    self.db_manager.timestamps.update_last_timestamp(coin, order["updated_at"])
             except Exception as e:
                 logging.error(f"Error processing executed orders for {coin}: {e}", exc_info=True)

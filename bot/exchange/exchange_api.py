@@ -5,27 +5,31 @@ class ExchangeAPI:
     def __init__(self, client):
         self.client = client
 
-    def place_order(self, order_type, coin, price, quantity):
+    def place_order(self, order_type, coin, price, quantity, order_config=None):
         try:
-            client_order_id = str(uuid.uuid4())  # Generate a unique client order ID
-            side = "buy" if order_type == "buy" else "sell"  # Determine the side of the order
-            # Determine the type of order
+            client_order_id = str(uuid.uuid4())
+            side = "buy" if order_type == "buy" else "sell"
 
-            order_config = {
+            order_data = {
                 "asset_quantity": quantity,
                 "limit_price": price,
                 "time_in_force": "gtc",
             }
+
+            if order_config:
+                order_data.update(order_config)
+
             return self.client.place_order(
                 client_order_id=client_order_id,
                 side=side,
                 order_type=order_type,
                 symbol=coin,
-                order_config=order_config,
+                order_config=order_data,
             )
         except Exception as e:
             logging.error(f"Error placing {order_type} order for {coin}: {e}", exc_info=True)
             return None
+
 
     def get_executed_orders(self, symbol: str, last_timestamp: str = None) -> list:
         """
