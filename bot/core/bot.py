@@ -16,7 +16,7 @@ class Bot:
                 if not coin_data or "results" not in coin_data:
                     logging.warning(f"No data for {coin}. Skipping...")
                     continue
-
+                insert_data = self.db_manager.insert_data(coin, coin_data)
                 historical_data = self.db_manager.fetch_data(coin)
                 self.strategy.execute_strategy(coin, coin_data, historical_data, self.api, self.db_manager)
             except Exception as e:
