@@ -1,5 +1,6 @@
 import logging
 import time
+import os
 from bot.strategies import ScalpingStrategy
 from bot.exchange import ExchangeAPI
 from bot.database import DatabaseManager
@@ -7,7 +8,6 @@ from bot.core.bot import Bot
 from bot.exchange import robinhood
 from mysql.connector import connect
 from dotenv import load_dotenv
-import os
 
 # Load environment variables
 load_dotenv('/Users/carlelder/Documents/predictionengine/.env')
@@ -28,19 +28,23 @@ logger = logging.getLogger(__name__)
 
 # Main Function
 def main():
+    """
+    1. Move coins to json / xml settings
+    2. Never put logic here - just set db connection, initialize objects, start core/bot, close the connection. The rest goes
+        to Bot
+    """
     # Coins we track and trade
-    symbols = [
-        "XRP-USD",
+    coins = [
         "ADA-USD",
-        "SOL-USD",
         "ETC-USD",
-        "XTZ-USD",
         "LINK-USD",
+        "SOL-USD",
         "UNI-USD",
+        "XRP-USD",
+        "XTZ-USD"
     ]
 
-
-    # Initialize database connection
+    # 1. Initialize database connection
     connection = connect(
         host=os.getenv("DB_HOST"),
         user=os.getenv("DB_USER"),
@@ -48,18 +52,25 @@ def main():
         database=os.getenv("DB_NAME"),
     )
 
-    # Initialize API client and related objects
+    # 2. Initialize API client and related objects
     api_client = robinhood.CryptoAPITrading()
-    db_manager = DatabaseManager(connection)
     api = ExchangeAPI(api_client)
+    db_manager = DatabaseManager(connection)
+    """
+    need to change this over. Do not create scalping here - create parent strategy, 
+    let bot/core pass which child to create based on settings file
+    """
     strategy = ScalpingStrategy()
-    bot = Bot(symbols, api, db_manager, strategy)
+    bot = Bot(coins, api, db_manager, strategy)
 
-    # Execute the bot
+    # 3. Execute the bot
     bot.run()
 
-    # Close the database connection after execution
+    # 4. Close the database connection after execution
     connection.close()
 
 if __name__ == "__main__":
+    """
+    Need to re-establish 10-second loop / while
+    """
     main()

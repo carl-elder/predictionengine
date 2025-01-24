@@ -61,23 +61,34 @@ class ExchangeAPI:
             logging.error(f"Error fetching executed orders: {e}", exc_info=True)
             return []
             
-    def get_best_price(self, coin = ''):
+    def get_best_price(self, coins):
         """
         Fetch the best bid and ask prices for the given coin.
         """
         try:
-            response = self.client.get_best_bid_ask(coin)
+            params = f"?symbol="
+            
+            if len(coins) > 1:
+                params = params + "&symbol=".join(str(element) for element in mylist)
+            else:
+                params = params + str(coins[0])
+                
+            path = f"/api/v1/crypto/marketdata/best_bid_ask/{params}"
+            response = self.client.make_api_request("GET", path)
+            
             if not response or "results" not in response:
-                logging.warning(f"No best price data for {coin}.")
-                return None
-            return response
+                logging.warning(f"No coin data found: {response}")
+                return []
+                
+            return response["results"]
+            
         except Exception as e:
-            logging.error(f"Error fetching best price for {coin}: {e}", exc_info=True)
+            logging.error(f"Error fetching best price for: {e}", exc_info=True)
             return None
 
     def get_holdings(self):
         """
-        Fetch the holdings for aall coin.
+        Fetch all of my holdings.
         """
         try:
             response = self.client.get_holdings()

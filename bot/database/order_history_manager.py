@@ -6,13 +6,6 @@ class OrderHistoryManager:
     def __init__(self, connection):
         self.connection = connection
 
-    import json
-import logging
-
-class OrderHistoryManager:
-    def __init__(self, connection):
-        self.connection = connection
-
     def insert_or_update_order(self, table_name, order_data):
         """
         Insert or update an order in the <coin>_order_history table.

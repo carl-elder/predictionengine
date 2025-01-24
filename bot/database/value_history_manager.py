@@ -5,24 +5,23 @@ class ValueHistoryManager:
     def __init__(self, connection):
         self.connection = connection
 
-    def insert_data(self, coin, coin_data):
+    def insert_data(self, coin_data):
         cursor = self.connection.cursor()
-        table_name = f"{coin.replace('-USD', '').lower()}_value_history"
-        results = coin_data.get("results", [])
-        if not results:
-            return
-        data_entry = results[0]
-        timestamp = data_entry.get("timestamp") or datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
-        price = float(data_entry.get("price", 0.0))
-        ask_price = float(data_entry.get("ask_inclusive_of_buy_spread", 0.0))
-        bid_price = float(data_entry.get("bid_inclusive_of_sell_spread", 0.0))
-        values = (timestamp, price, ask_price, bid_price)
-        sql = f"""
-            INSERT INTO {table_name} (timestamp, price, ask_inclusive_of_buy_spread, bid_inclusive_of_sell_spread)
-            VALUES (%s, %s, %s, %s)
-        """
-        cursor.execute(sql, values)
-        self.connection.commit()
+        for coin in coin_data:
+            table_name = f"{coin.replace('-USD', '').lower()}_value_history"
+            results = coin_data.get("results", [])
+            data_entry = results[0]
+            timestamp = data_entry.get("timestamp") or datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+            price = float(data_entry.get("price", 0.0))
+            ask_price = float(data_entry.get("ask_inclusive_of_buy_spread", 0.0))
+            bid_price = float(data_entry.get("bid_inclusive_of_sell_spread", 0.0))
+            values = (timestamp, price, ask_price, bid_price)
+            sql = f"""
+                INSERT INTO {table_name} (timestamp, price, ask_inclusive_of_buy_spread, bid_inclusive_of_sell_spread)
+                VALUES (%s, %s, %s, %s)
+            """
+            cursor.execute(sql, values)
+            self.connection.commit()
         cursor.close()
 
     def fetch_data(self):
