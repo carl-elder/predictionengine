@@ -66,10 +66,10 @@ class ExchangeAPI:
         Fetch the best bid and ask prices for the given coin.
         """
         try:
-            params = f"?symbol="
+            params = "?symbol="
             
             if len(coins) > 1:
-                params = params + "&symbol=".join(str(element) for element in mylist)
+                params = params + "&symbol=".join(str(element) for element in coins)
             else:
                 params = params + str(coins[0])
                 
@@ -95,18 +95,19 @@ class ExchangeAPI:
             if not response or "results" not in response:
                 logging.warning(f"No holdings data.")
                 return None
-            return response
+            return response["results"]
         except Exception as e:
             logging.error(f"Error fetching holdings: {e}", exc_info=True)
             return None
     
     def get_account(self):
         try:
-            response = self.client.get_account()
-            if not response or "buying_power" not in response:
-                logging.warning(f"Account unavailable.")
+            account = self.client.get_account()
+            buying_power = account.get("buying_power")
+            if not account or "buying_power" not in account:
+                logging.warning(f"Account unavailable. {account} - {buying_power}")
                 return None
-            return response
+            return buying_power
         except Exception as e:
             logging.error(f"Error fetching account: {e}", exc_info=True)
             return None

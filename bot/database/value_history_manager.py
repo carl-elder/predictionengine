@@ -1,5 +1,5 @@
 import logging
-
+import pandas as pd
 
 class ValueHistoryManager:
     def __init__(self, connection):
@@ -7,32 +7,40 @@ class ValueHistoryManager:
 
     def insert_data(self, coin_data):
         cursor = self.connection.cursor()
-        for coin in coin_data:
-            table_name = f"{coin.replace('-USD', '').lower()}_value_history"
-            results = coin_data.get("results", [])
-            data_entry = results[0]
-            timestamp = data_entry.get("timestamp") or datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
-            price = float(data_entry.get("price", 0.0))
-            ask_price = float(data_entry.get("ask_inclusive_of_buy_spread", 0.0))
-            bid_price = float(data_entry.get("bid_inclusive_of_sell_spread", 0.0))
-            values = (timestamp, price, ask_price, bid_price)
-            sql = f"""
-                INSERT INTO {table_name} (timestamp, price, ask_inclusive_of_buy_spread, bid_inclusive_of_sell_spread)
-                VALUES (%s, %s, %s, %s)
-            """
-            cursor.execute(sql, values)
+        try:
+            for data in coin_data:  # Iterate through the list of dictionaries
+                coin = data.get("symbol")
+                if not coin:
+                    logging.warning("Skipping entry without a symbol.")
+                    continue
+                
+                table_name = f"{coin.replace('-USD', '').lower()}_value_history"
+                timestamp = data.get("timestamp") or datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+                price = float(data.get("price", 0.0))
+                ask_price = float(data.get("ask_inclusive_of_buy_spread", 0.0))
+                bid_price = float(data.get("bid_inclusive_of_sell_spread", 0.0))
+                values = (timestamp, price, ask_price, bid_price)
+                
+                sql = f"""
+                    INSERT INTO {table_name} (timestamp, price, ask_inclusive_of_buy_spread, bid_inclusive_of_sell_spread)
+                    VALUES (%s, %s, %s, %s)
+                """
+                cursor.execute(sql, values)
+            
             self.connection.commit()
-        cursor.close()
+        except Exception as e:
+            logging.error(f"Error inserting data: {e}", exc_info=True)
+        finally:
+            cursor.close()
 
-    def fetch_data(self):
-        """Fetch historical data for the symbol from the database."""
-        table_name = f"{self.symbol.replace('-', '_')}_value_history"
-        query = f"SELECT timestamp, bid_inclusive_of_sell_spread, ask_inclusive_of_buy_spread FROM {table_name} ORDER BY timestamp DESC LIMIT 500"
-        
-        results = self.db_manager.execute_query(query)  # Assuming execute_query returns a list of tuples
-        if not results:
-            raise ValueError(f"No data found for {self.symbol} in {table_name}.")
-        
+    def get_value_history(self, coin_data, length):
+        cursor = self.connection.cursor()
+        coin_name = coin_data.get("symbol")
+        table_name = f"{coin_name.replace('-USD', '').lower()}_value_history"
+        query = f"SELECT timestamp, bid_inclusive_of_sell_spread, ask_inclusive_of_buy_spread FROM {table_name} ORDER BY timestamp DESC LIMIT {length}"
+        cursor.execute(query)
+        results = cursor.fetchall()
+        cursor.close()
         # Convert to DataFrame
         df = pd.DataFrame(results, columns=["timestamp", "bid_inclusive_of_sell_spread", "ask_inclusive_of_buy_spread"])
         df['timestamp'] = pd.to_datetime(df['timestamp'])

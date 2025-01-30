@@ -122,9 +122,9 @@ class CryptoAPITrading:
         return self.make_api_request("GET", path)
 
 def main():
-    api_trading_client = CryptoAPITrading()
-    print(api_trading_client.get_account())
-    print(api_trading_client.get_order())
+    #api_trading_client = CryptoAPITrading()
+    #print(api_trading_client.get_account())
+    #print(api_trading_client.get_order())
 
     """
     BUILD YOUR TRADING STRATEGY HERE
