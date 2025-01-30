@@ -56,44 +56,38 @@ class Bot:
     # 6. Alter buying power by adding sum of holdings value and buying power
     def __true_buying_power(self, holdings, coin_data) -> float:
         """
-        Calculates the total buying power, which includes cash balance and the USD value of holdings.
+        Calculate true buying power by adding the total holdings value in USD to cash balance.
         """
         # Fetch cash balance
-        cash = float(self.__get_buying_power())
+        account_data = self.api.get_account()
+        cash = float(account_data.get("buying_power", 0))  # Ensure fallback default
 
-        # Sum up the total USD value of each holding using the latest price data
+        # Ensure `holdings` is a dictionary, then extract results list
+        if isinstance(holdings, dict):
+            holdings_list = holdings.get("results", [])  # Extract list from "results"
+        else:
+            holdings_list = holdings  # Assume it's already a list
+
         total_holdings_value_usd = 0.0
 
-        for holding in holdings.get("results", []):
-            coin_code = holding["asset_code"]  # e.g., "BTC"
+        for holding in holdings_list:
+            asset_code = holding["asset_code"]  # Example: "BTC"
             quantity_held = float(holding["total_quantity"])
 
             if quantity_held > 0:
-                # Find matching coin data
-                matching_coin_data = next((c for c in coin_data if c["symbol"] == f"{coin_code}-USD"), None)
+                pair_symbol = f"{asset_code}-USD"  # Example: "BTC-USD"
+                best_price = self.api.get_best_price(pair_symbol)
 
-                if matching_coin_data:
-                    adjusted_ask_price = float(matching_coin_data["ask_inclusive_of_buy_spread"])
+                if best_price and "results" in best_price and best_price["results"]:
+                    price_info = best_price["results"][0]
+                    adjusted_ask_price = float(price_info["ask_inclusive_of_buy_spread"])
                     total_holdings_value_usd += quantity_held * adjusted_ask_price
 
-        # Calculate 2% of the total portfolio value
+        # Calculate 2% allocation
         total_portfolio_value_usd = total_holdings_value_usd + cash
-        ten_percent_dollars = 0.1 * total_portfolio_value_usd
+        allocation = 0.02 * total_portfolio_value_usd  # Adjusted percentage of total value
 
-        # Ensure we have the latest price data for the targeted trade
-        if coin_data:
-            best_prices_target = coin_data[0]  # Assuming the first item is the target coin
-            adjusted_ask_target = float(best_prices_target["ask_inclusive_of_buy_spread"])
-
-            # Final quantity calculation
-            if adjusted_ask_target > 0:
-                quantity_to_buy = ten_percent_dollars / adjusted_ask_target
-            else:
-                quantity_to_buy = 0.0
-
-            return quantity_to_buy
-        return 0.0
-
+        return allocation
 
     
     # 7. compile all for running
