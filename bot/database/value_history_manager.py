@@ -33,10 +33,9 @@ class ValueHistoryManager:
         finally:
             cursor.close()
 
-    def get_value_history(self, coin_data, length):
+    def get_value_history(self, coin_symbol, length):
         cursor = self.connection.cursor()
-        coin_name = coin_data.get("symbol")
-        table_name = f"{coin_name.replace('-USD', '').lower()}_value_history"
+        table_name = f"{coin_symbol.replace('-USD', '').lower()}_value_history"
         query = f"SELECT timestamp, bid_inclusive_of_sell_spread, ask_inclusive_of_buy_spread FROM {table_name} ORDER BY timestamp DESC LIMIT {length}"
         cursor.execute(query)
         results = cursor.fetchall()

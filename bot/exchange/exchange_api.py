@@ -63,28 +63,24 @@ class ExchangeAPI:
             
     def get_best_price(self, coins):
         """
-        Fetch the best bid and ask prices for the given coin.
+        Fetch the best bid and ask price for a list of coins.
         """
         try:
-            params = "?symbol="
-            
-            if len(coins) > 1:
-                params = params + "&symbol=".join(str(element) for element in coins)
-            else:
-                params = params + str(coins[0])
-                
+            params = "?symbol=" + "&symbol=".join(str(element) for element in coins)
             path = f"/api/v1/crypto/marketdata/best_bid_ask/{params}"
             response = self.client.make_api_request("GET", path)
-            
+
+            logging.debug(f"API Response for {coins}: {response}")  # Debugging
+
             if not response or "results" not in response:
                 logging.warning(f"No coin data found: {response}")
-                return []
-                
-            return response["results"]
-            
+                return {}  # Ensure it returns an empty dictionary, not None
+
+            return response
+
         except Exception as e:
-            logging.error(f"Error fetching best price for: {e}", exc_info=True)
-            return None
+            logging.error(f"Error fetching best price for {coins}: {e}", exc_info=True)
+            return {}
 
     def get_holdings(self):
         """
