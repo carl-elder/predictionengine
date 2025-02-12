@@ -4,8 +4,8 @@ import json
 import time
 from dotenv import load_dotenv
 from bot.strategies import ScalpingStrategy
-from bot.strategies.compiled_data import ScalpingData
-from bot.strategies.trade_decision import TradeDecision
+from bot.strategies.scalping_helpers import ScalpingData
+from bot.strategies.scalping_helpers import TradeDecision
 from bot.exchange import ExchangeAPI
 from bot.database import DatabaseManager
 from bot.core.bot import Bot
