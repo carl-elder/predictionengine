@@ -4,6 +4,8 @@ import json
 import time
 from dotenv import load_dotenv
 from bot.strategies import ScalpingStrategy
+from bot.strategies.compiled_data import ScalpingData
+from bot.strategies.trade_decision import TradeDecision
 from bot.exchange import ExchangeAPI
 from bot.database import DatabaseManager
 from bot.core.bot import Bot
@@ -58,7 +60,9 @@ def main():
     api = ExchangeAPI(api_client)
     db_manager = DatabaseManager(connection)
     strategy = ScalpingStrategy()
-    bot = Bot(api, db_manager, strategy, config)  # Pass config to Bot
+    coin_data = ScalpingData()
+    trade_decision = TradeDecision()
+    bot = Bot(api, db_manager, strategy, config, coin_data, trade_decision)  # Pass config to Bot
     i = 0
     try:
         while i < 6:
